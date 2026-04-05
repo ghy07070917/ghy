@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>职场性格潜能测试 (神话原型版)</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5f7fa;
+            --text-color: #333;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #eef2f5;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            width: 90%;
+            max-width: 600px;
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 30px;
+            font-weight: normal;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background 0.2s;
+            margin: 10px;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: #357abd;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* 进度条 */
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        /* 题目样式 */
+        .question-text {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            font-weight: bold;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* 结果样式 */
+        .result-type {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 20px 0;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .result-desc {
+            text-align: left;
+            line-height: 1.8;
+            color: #555;
+            background: var(--secondary-color);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- 首页 -->
+        <div id="start-screen">
+            <h1>职场性格潜能测试</h1>
+            <h2>探索你的职场神话原型</h2>
+            <p style="color: #777; margin-bottom: 30px;">请根据你在职场中的第一反应作答，没有对错之分。</p>
+            <button class="btn" onclick="startQuiz()">开始测试</button>
+        </div>
+
+        <!-- 测试界面 -->
+        <div id="quiz-screen" class="hidden">
+            <div class="progress-container">
+                <div class="progress-bar" id="progress"></div>
+            </div>
+            <div class="question-text" id="question-text">题目加载中...</div>
+            <div class="options" id="options-container">
+                <!-- 选项将通过JS插入 -->
+            </div>
+        </div>
+
+        <!-- 结果界面 -->
+        <div id="result-screen" class="hidden">
+            <h2>你的职场原型是</h2>
+            <!-- 这里将直接显示神话名字 -->
+            <div class="result-type" id="result-code"></div>
+            <div id="result-title"></div>
+            <div class="result-desc" id="result-detail"></div>
+            <button class="btn btn-outline" onclick="location.reload()">重新测试</button>
+        </div>
+    </div>
+
+    <script>
+        // 题库数据 (保持不变)
+        const questions = [
+            // E vs I
+            { text: "在团队会议中，我更倾向于：", a: "积极发言，通过讨论来整理思路", b: "认真倾听，会后独自思考", type: "E" },
+            { text: "经过一周繁忙的工作，我通常通过什么方式“充电”？", a: "和同事或朋友聚会", b: "独自看书或休息", type: "I" },
+            { text: "当面临一个复杂问题时，我更喜欢：", a: "立即找人头脑风暴", b: "先自己查阅资料分析", type: "E" },
+            { text: "在公司团建中，我通常感到：", a: "充满活力，喜欢认识新朋友", b: "有些疲惫，希望能早点回家", type: "I" },
+            { text: "我的工作风格更偏向于：", a: "喜欢开放式办公，随时交流", b: "喜欢独立空间，避免打扰", type: "E" },
+            
+            // S vs N
+            { text: "我更关注信息的哪一方面？", a: "具体的细节、数据和事实", b: "整体的概念和未来的趋势", type: "S" },
+            { text: "接收任务指令时，我更喜欢：", a: "清晰、具体、按部就班的步骤", b: "只有大方向，具体方法由我发挥", type: "N" },
+            { text: "描述一件事情时，我通常会：", a: "实事求是，注重细节", b: "运用比喻，注重联想", type: "S" },
+            { text: "我更信任：", a: "已经被验证的经验和现实", b: "我的直觉和灵感", type: "N" },
+            { text: "学习新技能时，我倾向于：", a: "掌握具体的操作步骤", b: "理解背后的理论逻辑", type: "S" },
+
+            // T vs F
+            { text: "做决策时，我主要依据：", a: "逻辑分析、客观标准", b: "个人价值观、对他人的影响", type: "T" },
+            { text: "当同事犯错时，我首先想到的是：", a: "指出错误，寻找解决方案", b: "顾及感受，给予鼓励", type: "T" },
+            { text: "我认为在职场中，什么更重要？", a: "公平和正义", b: "仁慈和人情", type: "F" },
+            { text: "面对冲突，我通常会：", a: "据理力争，坚持真理", b: "试图妥协，维护关系", type: "T" },
+            { text: "评价一个员工时，我更看重：", a: "他的能力和业绩", b: "他的态度和团队精神", type: "F" },
+
+            // J vs P
+            { text: "关于工作计划，我通常：", a: "制定详细时间表并严格执行", b: "保持灵活，随情况调整", type: "J" },
+            { text: "在项目截止日期前，我通常：", a: "提前很久完成", b: "在压力下工作，最后时刻效率最高", type: "P" },
+            { text: "我的办公桌或电脑桌面通常是：", a: "井井有条，分类清晰", b: "有些杂乱，但我找得到", type: "J" },
+            { text: "面对突发变化，我的反应是：", a: "感到不安，希望恢复计划", b: "感到兴奋，乐于接受挑战", type: "P" },
+            { text: "我认为“完成任务”意味着：", a: "按照预定标准彻底结束", b: "只要大方向对了，细节可后续完善", type: "J" }
+        ];
+
+        // 结果描述库 (已完全重写，不再显示MBTI代码)
+        const resultsData = {
+            "ISTJ": { name: "赫菲斯托斯", desc: "你是职场中的“匠神”。你务实、专注，拥有将混乱变为秩序的强大执行力。你像火神锻造神器一样，专注于构建稳固的系统与流程，是团队中最可靠的基石。<br><br><strong>适合职业：</strong>数据分析师、项目经理、财务审计、系统架构师。" },
+            "ISFJ": { name: "德墨忒尔", desc: "你是职场中的“丰收女神”。你温暖、负责，致力于滋养团队和维护和谐的环境。你不仅关注工作成果，更关心同事的福祉，总是默默付出，是团队坚实的后盾。<br><br><strong>适合职业：</strong>人力资源、行政管理、客户服务、教育咨询。" },
+            "INFJ": { name: "雅典娜", desc: "你是职场中的“智慧女神”。你拥有深邃的洞察力和战略眼光，不仅追求理想，更懂得如何通过智慧去实现它。你擅长透过现象看本质，是富有远见的引领者。<br><br><strong>适合职业：</strong>心理咨询师、战略规划、作家、非营利组织负责人。" },
+            "INFP": { name: "俄耳甫斯", desc: "你是职场中的“传奇诗人”。你拥有丰富的内心世界和极高的共情能力，总是试图在工作中寻找深层的意义。你的创造力和对美的追求能感染周围的人，赋予工作以灵魂。<br><br><strong>适合职业：</strong>创意总监、编辑、艺术家、社会工作者。" },
+            "INTJ": { name: "奥丁", desc: "你是职场中的“众神之父”。你拥有宏大的视野和极致的理性，总是为了长远的目标进行布局。你追求知识与力量，是能够掌控全局的战略大师。<br><br><strong>适合职业：</strong>CEO、首席技术官、战略顾问、科学家。" },
+            "INTP": { name: "普罗米修斯", desc: "你是职场中的“先知”。你拥有超前于时代的智慧，总是能发现事物背后的逻辑和规律。你特立独行，为了真理和创新不惜挑战权威。<br><br><strong>适合职业：</strong>软件架构师、理论物理学家、哲学家、发明家。" },
+            "ESTJ": { name: "宙斯", desc: "你是职场中的“众神之王”。你天生具有统御力，果断、威严，能够迅速建立秩序并指挥若定。你重视规则和效率，是强有力的领导者。<br><br><strong>适合职业：</strong>企业高管、法官、政府官员、项目总监。" },
+            "ESTP": { name: "阿瑞斯", desc: "你是职场中的“战神”。你充满活力，行动力极强，擅长在危机和竞争中寻找机会。你直面挑战，享受解决棘手问题带来的快感。<br><br><strong>适合职业：</strong>销售总监、创业者、交易员、应急救援专家。" },
+            "ESFP": { name: "狄奥尼索斯", desc: "你是职场中的“酒神”。你热情奔放，拥有极强的感染力，能让枯燥的工作变得充满乐趣。你擅长活跃气氛，是团队中的开心果和凝聚力核心。<br><br><strong>适合职业：</strong>活动策划、公关经理、演员、培训师。" },
+            "ESFJ": { name: "赫拉", desc: "你是职场中的“天后”。你重视承诺、家庭（团队）和传统。你拥有强大的组织能力和包容心，致力于维护团队的稳定与和谐。<br><br><strong>适合职业：</strong>人力资源总监、行政主管、教师、社区经理。" },
+            "ENFJ": { name: "阿波罗", desc: "你是职场中的“光明之神”。你阳光、正直，具有极强的感召力。你致力于启发他人，传播理念，是能够凝聚人心的精神领袖。<br><br><strong>适合职业：</strong>公众演说家、人力资源经理、政治家、教练。" },
+            "ENFP": { name: "赫尔墨斯", desc: "你是职场中的“信使”。你思维敏捷，充满好奇心，擅长连接不同的人与事。你总是能带来新的想法和视角，是团队中的创新源泉。<br><br><strong>适合职业：</strong>记者、市场营销、创意总监、招聘专员。" },
+            "ENTP": { name: "洛基", desc: "你是职场中的“诡计之神”（褒义）。你机智、狡黠，擅长打破常规，通过非传统的手段解决问题。你享受智力博弈，是颠覆现状的创新者。<br><br><strong>适合职业：</strong>律师、风险投资人、创意顾问、喜剧演员。" },
+            "ISTP": { name: "波塞冬", desc: "你是职场中的“海神”。你深沉、独立，拥有驾驭复杂工具和环境的能力。你平时低调，但在关键时刻能爆发出惊人的力量。<br><br><strong>适合职业：</strong>机械工程师、飞行员、法医、极限运动员。" },
+            "ISFP": { name: "阿尔忒弥斯", desc: "你是职场中的“狩猎女神”。你优雅、独立，拥有敏锐的审美直觉。你按照自己的节奏行事，用独特的方式展现自我价值。<br><br><strong>适合职业：</strong>平面设计师、兽医、珠宝设计师、摄影师。" },
+            "ENTJ": { name: "凯撒", desc: "你是职场中的“征服者”。你意志坚定，目标明确，拥有无可匹敌的执行力。你生来就是为了领导团队攻克难关，建立丰功伟绩。<br><br><strong>适合职业：</strong>企业创始人、运营总监、管理顾问、律师。" }
+        };
+
+        let currentQuestionIndex = 0;
+        let scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+
+        function startQuiz() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestionIndex];
+            document.getElementById('question-text').innerText = `${currentQuestionIndex + 1}. ${q.text}`;
+            
+            const optionsHtml = `
+                <button class="btn btn-outline" onclick="handleAnswer('${q.type}', true)">${q.a}</button>
+                <button class="btn btn-outline" onclick="handleAnswer('${q.type}', false)">${q.b}</button>
+            `;
+            document.getElementById('options-container').innerHTML = optionsHtml;
+
+            // 更新进度条
+            const progress = ((currentQuestionIndex) / questions.length) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function handleAnswer(type, isOptionA) {
+            // 计分逻辑
+            if (isOptionA) {
+                scores[type]++;
+            } else {
+                // 如果选B，则给对立维度加分
+                if (type === 'E') scores['I']++;
+                if (type === 'I') scores['E']++;
+                if (type === 'S') scores['N']++;
+                if (type === 'N') scores['S']++;
+                if (type === 'T') scores['F']++;
+                if (type === 'F') scores['T']++;
+                if (type === 'J') scores['P']++;
+                if (type === 'P') scores['J']++;
+            }
+
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            // 计算类型
+            const type = 
+                (scores.E >= scores.I ? 'E' : 'I') +
+                (scores.S >= scores.N ? 'S' : 'N') +
+                (scores.T >= scores.F ? 'T' : 'F') +
+                (scores.J >= scores.P ? 'J' : 'P');
+
+            const resultInfo = resultsData[type];
+            
+            // 显示神话名字，而不是MBTI代码
+            document.getElementById('result-code').innerText = resultInfo.name;
+            document.getElementById('result-detail').innerHTML = resultInfo.desc;
+        }
+    </script>
+</body>
+</html>
